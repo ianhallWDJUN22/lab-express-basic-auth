@@ -115,3 +115,6 @@ ul li {
 #logout-form button {
   width: 120px;
 }
+.error-message {
+  background-color: red;
+}

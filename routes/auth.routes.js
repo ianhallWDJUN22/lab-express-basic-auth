@@ -3,7 +3,9 @@ const bcryptjs = require('bcryptjs');
 const saltRounds = 10;
 const User = require('../models/User.model');
 
-router.get("/signup", (req, res, next) => {
+const { isLoggedIn, isLoggedOut } = require('../middlewares/auth.middleware');
+
+router.get("/signup", isLoggedOut, (req, res, next) => {
     res.render("auth/signup.hbs");
 });
 
@@ -14,9 +16,10 @@ router.post('/signup', (req, res, next) => {
 
     bcryptjs
         .genSalt(saltRounds)
-        .then(salt => bcryptjs.hash(password, salt))
+        .then(salt => {
+           return bcryptjs.hash(password, salt);
+        })
         .then(hashedPassword => {
-            console.log(`hashed password is: ${hashedPassword}`);
             return User.create({
                 username,
                 password: hashedPassword
@@ -24,67 +27,54 @@ router.post('/signup', (req, res, next) => {
         })
         .then(createdUser => {
             console.log('Newly created user:', createdUser)
-            res.send(`Congratulations ${createdUser.username}, your account was successfully created.`)
+            res.redirect('/')
+            
         })
-        .catch(err => next(err))
+        
+        .catch(err => {
+            console.log(err)
+            next(err)
+        })
+
     })
 
-    router.get('/login', (req, res) => res.render('auth/login'));
+    router.get('/login', isLoggedOut,  (req, res, next) => {
+        res.render('auth/login')
+    });
     
-    router.post('/login', (req, res, next) =>{
+    router.post('/login', isLoggedOut, (req, res, next) =>{
         const { username, password } = req.body;
+        // if (username === '' || password === '') {
+        //     res.render('auth/login', {
+        //         errorMessage: 'Must enter both username and password to login.'
+        //     })
+        //     return;
+        // }
 
-        if (username === '' || password === '') {
-            res.render('auth/login', {
-                errorMessage: 'Must enter both username and password to login.'
-            })
-            return;
-        }
-
+        let myUser;
         User.findOne({ username })
-            .then(user => {
-                if (!user) {
-                    res.render('auth/login', { errorMessage: 'Username is not registered. Try a different username.'});
-                    return;
-                } else if (bcryptjs.compareSync(password, user.password)) {
-                    res.render('users/user-profile', { user });
-                }else {
-                    res.render('auth/login', { errorMessage: 'Incorrect password.'});
+            .then(foundUser => {
+                console.log('Found User:', foundUser);
+           
+                myUser = foundUser;
+                if(foundUser === null) {
+                res.render('auth/login.hbs', { errorMessage: 'Incorrect username or password.' })
+            } else {
+            return bcryptjs.compare(password, foundUser.password)
+            }
+
+            }) 
+            .then(isValidPassword => {
+                if(isValidPassword){
+                   console.log(req.session)
+                    req.session.currentUser = myUser;
+                    res.redirect('/user-profile')
+                } else {
+                res.render('auth/login.hbs', { errorMessage: 'Incorrect Username or password.' })
                 }
             })
             .catch(error => next(error));
     });
     
-    
+
     module.exports = router;
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
