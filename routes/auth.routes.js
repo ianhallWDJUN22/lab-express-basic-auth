@@ -5,9 +5,7 @@ const User = require('../models/User.model');
 
 const { isLoggedIn, isLoggedOut } = require('../middlewares/auth.middleware');
 
-router.get("/signup", isLoggedOut, (req, res, next) => {
-    res.render("auth/signup.hbs");
-});
+
 
 router.post('/signup', (req, res, next) => {
     

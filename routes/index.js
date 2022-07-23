@@ -8,6 +8,6 @@ router.get("/", (req, res, next) => {
 });
 
 router.get('/user-profile', isLoggedIn, (req, res, next) => {
-  res.send('user profile' + req.session.currentUser.username)
+  res.render('users/user-profile.hbs', { user: req.session.currentUser.data.username })
 })
 module.exports = router;
