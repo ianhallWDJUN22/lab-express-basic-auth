@@ -6,12 +6,27 @@ const User = require('../models/User.model');
 const { isLoggedIn, isLoggedOut } = require('../middlewares/auth.middleware');
 
 
+router.get('/signup', (req, res, next) => {
+    res.render('auth/signup.hbs')
+})
+
 
 router.post('/signup', (req, res, next) => {
     
     const { username, password} = req.body;
-    console.log('form data', req.body)
+    
 
+         if (username === '' || password === '') {
+            res.render('auth/signup', {
+                errorMessage: 'Must enter both username and password to sign up.'
+            })
+            return;
+        }
+    
+        User.findOne({ username })
+    .then(foundUser => {
+        
+        if(foundUser === null) {
     bcryptjs
         .genSalt(saltRounds)
         .then(salt => {
@@ -34,7 +49,12 @@ router.post('/signup', (req, res, next) => {
             next(err)
         })
 
+    } else {
+        res.render('auth/signup.hbs', { errorMessage: 'Username already exists. Choose a different Username.' })
+    }
+
     })
+})
 
     router.get('/login', isLoggedOut,  (req, res, next) => {
         res.render('auth/login')
